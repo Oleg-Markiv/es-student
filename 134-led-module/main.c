@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "led.h"
+#include "log.h"
 
 const uint BUTTON_PIN = 15;
 
@@ -17,12 +18,14 @@ bool get_button_debounce(uint pin) {
 void handle_command(int command) {
     if (command == 'e') {
         led_set(true);
-        printf("led %s\n", led_is_on() ? "on" : "off");
+        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
     } else if (command == 'd') {
         led_set(false);
-        printf("led %s\n", led_is_on() ? "on" : "off");
+        LOG_INF("led %s\n", led_is_on() ? "on" : "off");
+    } else if (command == 'v') {
+        log_version();
     } else {
-        printf("unknown command: %c\n", command);
+        LOG_ERR("unknown command: %c\n", command);
     }
 }
 
@@ -39,18 +42,24 @@ int main() {
     bool previous = false;
 
     while (1) {
+        // Начало работы с кнопкой
         bool current = get_button_debounce(BUTTON_PIN);
-
         if (previous == true && current == false) {
+            LOG_INF("led %s\n", led_is_on() ? "on" : "off");
             led_toggle();
         }
-
         previous = current;
+        // Конец работы с кнопкой
 
+        // Начало работы с консолью
         int command = getchar_timeout_us(0);
 
-        if (command == PICO_ERROR_TIMEOUT) { continue; }
-
+        if (command == PICO_ERROR_TIMEOUT) {
+            continue;
+        }
+        
+        LOG_DBG("got %c\n", command);
         handle_command(command);
+        // Конец работы с консолью
     }
 }
